@@ -1,12 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
-import {
-  connectSnap,
-  getSnap,
-  sendHello,
-  shouldDisplayReconnectButton,
-} from '../utils';
+import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
@@ -14,6 +9,8 @@ import {
   SendHelloButton,
   Card,
 } from '../components';
+
+import {getAbi} from './function';
 
 const Container = styled.div`
   display: flex;
@@ -99,9 +96,20 @@ const ErrorMessage = styled.div`
   }
 `;
 
+enum TransactionConstants {
+  // The address of an arbitrary contract that will reject any transactions it receives
+  Address = '0x08A8fDBddc160A7d5b957256b903dCAb1aE512C5',
+  // Some example encoded contract transaction data
+  UpdateWithdrawalAccount = '0x83ade3dc00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000047170ceae335a9db7e96b72de630389669b334710000000000000000000000006b175474e89094c44da98b954eedeac495271d0f',
+  UpdateMigrationMode = '0x2e26065e0000000000000000000000000000000000000000000000000000000000000000',
+  UpdateCap = '0x85b2c14a00000000000000000000000047170ceae335a9db7e96b72de630389669b334710000000000000000000000000000000000000000000000000de0b6b3a7640000',
+}
+
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
-
+  const [addr, setAddr] = useState('');
+  const [newVar,setNewVar] = useState({});
+  const [myInput,setMyInput] = useState("");
   const handleConnectClick = async () => {
     try {
       await connectSnap();
@@ -117,9 +125,48 @@ const Index = () => {
     }
   };
 
+  const  myfunc = async()=>{
+    const p2 = await  getAbi(myInput);
+    console.log(p2)
+    
+    setNewVar(p2);
+  }
+
+  const addrChangeHandle = async (e: any) => {
+    setAddr(e.target.value);
+  };
+
+  const onSubmitHandle = async (e: any) => {
+    try {
+      e.preventDefault();
+      console.log('hello', addr);
+      // eslint-disable-next-line @typescript-eslint/no-shadow
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleSendHelloClick = async () => {
     try {
-      await sendHello();
+      const [from] = (await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      })) as string[];
+
+      if (!from) {
+        throw new Error('Failed to get accounts.');
+      }
+
+      await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            from,
+            to: TransactionConstants.Address,
+            value: '0x0',
+            data: '0x1',
+          },
+        ],
+      });
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -210,9 +257,57 @@ const Index = () => {
             field.
           </p>
         </Notice>
+        <form onSubmit={onSubmitHandle}>
+          <input
+            id="addr1"
+            // value={addr}
+            onChange={(e) => {
+              if (e.target.value != "") {
+                // getAbi(e.target.value)
+                setMyInput(e.target.value); 
+              }
+            }}
+            type="text"
+          />
+          <button type="submit" onClick={myfunc}>Submit</button>
+        </form>
+        
       </CardContainer>
+      <ol>
+      {Object.keys(newVar).length!=0 && Object.keys(newVar).map((key)=>(
+        <li>{key.split('(')[0]}
+          <br></br>
+
+          {/* {key.split('(')[1].split(')')[0].split(',').map((key2)=>(
+            <div>key2</div>
+          ))} */}
+
+          {!key.split('(')[1] && 
+            <div>
+              <input
+              placeholder="No argument"
+              ></input>
+            </div>
+          }
+
+{key.split('(')[1] && key.split('(')[1].split(')')[0].split(',').length!=0 && key.split('(')[1] && key.split('(')[1].split(')')[0].split(',').map((key2)=>(
+            <div>
+              <input
+              placeholder={key2}
+              ></input>
+            </div>
+          ))}
+          <br/>
+          <button>Submit</button>
+        
+        </li>
+      ))}
+      </ol>
+      
+      
     </Container>
   );
+  
 };
 
 export default Index;
