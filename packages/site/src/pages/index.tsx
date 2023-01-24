@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
@@ -9,8 +9,12 @@ import {
   SendHelloButton,
   Card,
 } from '../components';
+import axios from "axios";
+import { ethers } from 'ethers'
 
 import {getAbi} from './function';
+import { all } from 'axios';
+
 
 const Container = styled.div`
   display: flex;
@@ -110,6 +114,8 @@ const Index = () => {
   const [addr, setAddr] = useState('');
   const [newVar,setNewVar] = useState({});
   const [myInput,setMyInput] = useState("");
+  const [GetCreatorOfNft,setGetCreatorOfNft] = useState('')
+
   const handleConnectClick = async () => {
     try {
       await connectSnap();
@@ -126,11 +132,28 @@ const Index = () => {
   };
 
   const  myfunc = async()=>{
-    const p2 = await  getAbi(myInput);
-    console.log(p2)
-    
-    setNewVar(p2);
+    const apiKey = 'sdwDCJvTN9o-Rw5T87Rud5BHpt_F8mzN'
+    const url = `https://api-testnet.polygonscan.com/api?module=contract&action=getabi&address=${myInput}&tag=latest&apikey=${apiKey}`
+    const res = await axios.get(url);
+    const abi = JSON.parse(res.data.result)
+    const contract = new ethers.Contract(myInput, abi,)
+    // const p2 = await  getAbi(myInput);
+    setNewVar(contract.functions);
   }
+
+
+  const  myfunc2 = async(Name1,Input)=>{
+            const apiKey = 'sdwDCJvTN9o-Rw5T87Rud5BHpt_F8mzN'
+             const url = `https://api-testnet.polygonscan.com/api?module=contract&action=getabi&address=${myInput}&tag=latest&apikey=${apiKey}`
+             const res = await axios.get(url);
+             const abi = JSON.parse(res.data.result)
+             const contract = new ethers.Contract(myInput, abi,)
+             const ans = await contract[Name1](Input)
+  }
+
+  
+
+  const allfun={};
 
   const addrChangeHandle = async (e: any) => {
     setAddr(e.target.value);
@@ -139,7 +162,6 @@ const Index = () => {
   const onSubmitHandle = async (e: any) => {
     try {
       e.preventDefault();
-      console.log('hello', addr);
       // eslint-disable-next-line @typescript-eslint/no-shadow
     } catch (e) {
       console.error(e);
@@ -172,6 +194,15 @@ const Index = () => {
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
+
+
+  const callfunction=(e)=>{
+
+    const {name,value} = e.target;
+    allfun[name]=value;
+}
+
+
 
   return (
     <Container>
@@ -275,7 +306,8 @@ const Index = () => {
       </CardContainer>
       <ol>
       {Object.keys(newVar).length!=0 && Object.keys(newVar).map((key)=>(
-        <li>{key.split('(')[0]}
+        <li>
+          {key.split('(')[0]}
           <br></br>
 
           {/* {key.split('(')[1].split(')')[0].split(',').map((key2)=>(
@@ -293,18 +325,22 @@ const Index = () => {
 {key.split('(')[1] && key.split('(')[1].split(')')[0].split(',').length!=0 && key.split('(')[1] && key.split('(')[1].split(')')[0].split(',').map((key2)=>(
             <div>
               <input
+
               placeholder={key2}
+              name={key.split('(')[0]}
+              value={allfun[key.split('(')[0]]}
+              onChange={callfunction}
               ></input>
             </div>
           ))}
           <br/>
-          <button>Submit</button>
-        
+          <button onClick={(e)=>{myfunc2(key.split('(')[0],allfun[key.split('(')[0]])
+          }} > Query</button>
         </li>
       ))}
       </ol>
       
-      
+  
     </Container>
   );
   

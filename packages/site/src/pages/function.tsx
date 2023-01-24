@@ -18,6 +18,10 @@ export const getAbi = async (address: string) => {
 
     console.log(contract.functions)
 
+    // console.log(await contract.GetCreatorOfNft(1));
+    // contract.methods.getValue().call().then((result:any) => {
+    //     console.log(result);
+    //   });
     return contract.functions
 
 }
