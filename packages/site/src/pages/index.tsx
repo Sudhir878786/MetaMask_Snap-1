@@ -114,7 +114,8 @@ const Index = () => {
   const [addr, setAddr] = useState('');
   const [newVar,setNewVar] = useState({});
   const [myInput,setMyInput] = useState("");
-  const [GetCreatorOfNft,setGetCreatorOfNft] = useState('')
+  const [GetCreatorOfNft,setGetCreatorOfNft] = useState('');
+  const [functionNames, setFunctionNames] = useState({});
 
   const handleConnectClick = async () => {
     try {
@@ -138,17 +139,67 @@ const Index = () => {
     const abi = JSON.parse(res.data.result)
     const contract = new ethers.Contract(myInput, abi,)
     // const p2 = await  getAbi(myInput);
+
+            //  this is the way to find all the keys in a smart contract
+            const iface = new ethers.utils.Interface(abi)
+            // console.log("this is the iface11", Object.keys(iface.functions));
+            const functions = Object.keys(iface.functions);
+    let abc = {}
+    console.log("functions", functions)
+      for(let i=0; i<functions.length ;i++){
+        let function1 = functions[i];
+        console.log(function1);
+        let function1Name = function1.split('(')[0];
+        // setFunctionNames({function1Name:function1});
+        console.log(function1Name, function1)
+        abc = { ...abc,
+          [function1Name]: function1
+        }
+       
+      }
+      setFunctionNames(abc);
+
     setNewVar(contract.functions);
   }
 
 
   const  myfunc2 = async(Name1,Input)=>{
+
+            console.log("this si the value of the key and input for the myfunc2 function:- ", Name1, Input);
             const apiKey = 'sdwDCJvTN9o-Rw5T87Rud5BHpt_F8mzN'
              const url = `https://api-testnet.polygonscan.com/api?module=contract&action=getabi&address=${myInput}&tag=latest&apikey=${apiKey}`
              const res = await axios.get(url);
+             console.log("this is the response to the api:- ", res, res.data.result)
              const abi = JSON.parse(res.data.result)
-             const contract = new ethers.Contract(myInput, abi,)
+             const iface1 = new ethers.utils.Interface(abi)
+             console.log
+             console.log(iface1.functions.Name1.stateMutability)
+
+
+             const ApiKey='sdwDCJvTN9o-Rw5T87Rud5BHpt_F8mzN'
+            //  '1736a41e871645f5a13a2993a0aef694'
+            //  `https://polygon-mumbai.infura.io/v3/${apiKey}`
+            // https://polygon-mumbai.g.alchemy.com/v2/sdwDCJvTN9o-Rw5T87Rud5BHpt_F8mzN
+             const provider = new ethers.providers.AlchemyProvider("maticmum", ApiKey);
+            //  console.log("this si the provider",provider)
+             const contract = new ethers.Contract(myInput, abi, provider)
+
+
+
+
+            //  this is the way to find all the keys in a smart contract
+             const iface = new ethers.utils.Interface(abi)
+             console.log("this is the iface", iface);
+             
+             console.log("contrat abject",contract);
              const ans = await contract[Name1](Input)
+
+
+             
+            //  console.log("tis is the state mutability",contract.functions,"now                                 ", contract.functions.GetCurrentToken.constant);
+            //  await ans.wait()
+             console.log("this is the ans:-", ans);
+             return ans;
   }
 
   
